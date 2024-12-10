@@ -1,162 +1,148 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE HTML>
+<!--
+    Dimension by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Is The Light Still On?</title>
-  <script src="https://cdn.jsdelivr.net/npm/ml5@0.12.2/dist/ml5.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-
-    #classification {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    #image-container {
-      margin-top: 20px;
-    }
-
-    img {
-      width: 640px;
-      height: auto;
-      border: 1px solid #ccc;
-    }
-
-    .noteworthy {
-      background-color: #ffeb3b;
-      /* Yellow background */
-      font-weight: bold;
-      /* Bold text */
-    }
-  </style>
+    <title>Is The Light Still On?</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ml5@0.12.2/dist/ml5.min.js"></script>
+    <script src="classify.js"></script>
+    <noscript>
+        <link rel="stylesheet" href="assets/css/noscript.css" />
+    </noscript>
+    <style>
+        .noteworthy {
+            color: #ffeb3b;
+            /* Yellow background */
+            font-weight: bold;
+            /* Bold text */
+        }
+    </style>
 </head>
 
-<body>
-  <h1>Is The Light Still On?</h1>
+<body class="is-preload">
 
-  <!-- Display the result here -->
-  <div id="classification">Loading...</div>
+    <!-- Wrapper -->
+    <div id="wrapper">
 
-  <!-- Image Section (MJPEG stream) -->
-  <div id="image-container">
-    <h2>The Light Right Now</h2>
-    <img id="streamImage" src="https://livermore-lightbulb-proxy.vercel.app/api/frame" alt="MJPEG Stream"
-      crossorigin="anonymous" onload="onLoad()" class="img-fluid">
-  </div>
+        <!-- Header -->
+        <header id="header">
+            <div class="logo">
+                <span class="icon fa-lightbulb"></span>
+            </div>
+            <div class="content">
+                <div class="inner">
+                    <h1>Is The Light Still On?</h1>
+                    <h2 id="classification">Loading...</h2>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#how">How Do I Know?</a></li>
+                    <li><a href="#what">What Light Bulb?</a></li>
+                </ul>
+            </nav>
+        </header>
 
-  <div class="container mt-5">
-    <h2>Labels and Confidence</h2>
-    <table class="table table-bordered" id="confidenceTable">
-      <thead>
-        <tr>
-          <th>Label</th>
-          <th>Confidence</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows will be dynamically inserted here -->
-      </tbody>
-    </table>
-  </div>
+        <div id="main">
 
-  <script>
-    // Load the image classifier model
-    const classifier = ml5.imageClassifier('MobileNet', { topk: 25 }, modelReady);
-    let modelLoaded = false;
-    let imageLoaded = false;
-    let running = false;
+            <article id="how">
+                <h2 class="major">How Do I Know?</h2>
+                <p>The process to determine if the Livermore Centennial Lightbulb is still shining is very easy with
+                    modern web technologies.
+                    We simply complete the following steps:</p>
+                <ol>
+                    <li>Fetch a frame from the bulbs live stream</li>
+                    <li>Use a machine learning model to classify the image</li>
+                    <li>Determine if a classification that implies the light bulb is still on is present</li>
+                    <li>Display a simple "Yes" or "No" to the user</li>
+                </ol>
 
-    // When the model is ready, start classifying the image
-    function modelReady() {
-      console.log('Model Loaded!');
-      modelLoaded = true;
+                <h3>Fetch A Frame</h3>
+                Below is the most recent frame from the Livermore Centennial Lightbulb's live stream, and is what is
+                being used to determine if the light is still on.
+                <span class="image main"> <img id="streamImage"
+                        src="https://livermore-lightbulb-proxy.vercel.app/api/frame" alt="MJPEG Stream"
+                        crossorigin="anonymous" onload="onLoad()" class="img-fluid"></span>
+                We are able to fetch this frame by using a simple proxy server that converts the MJPEG stream into a
+                single image.
+                This is hosted on Vercel, and is a simple Node.js server that fetches the stream and returns the most
+                recent frame.
+                It also adds some headers for cross origin requests, as the stream is not CORS enabled.
+                This is needed to allow the machine learning model to classify the image.
+                The code that drives that can be found on my github <a
+                    href="https://github.com/CollinDietz/livermore-lightbulb-proxy">here</a>.
+                <br>
+                <br>
+                <h3>Use A Machine Learning Model</h3>
+                We are using a pre-trained MobileNet model from the ml5.js library to classify the image.
+                This library is obtained from a CDN, and is very easy to use. We simply load the model, and then pass
+                the image to it.
+                The model will then return a list of classifications, and their confidence levels.
+                <br>
+                <br>
+                For the current frame, the following classifications were returned:
+                <br>
+                <br>
+                <table id="confidenceTable">
+                    <thead>
+                        <tr>
+                            <th>Label</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be dynamically inserted here -->
+                    </tbody>
+                </table>
 
-      if (imageLoaded && !running) {
-        running = true;
-        classifyImage();
-      }
-    }
+                <h3>Determine If The Light Is Still On</h3>
+                We now check if any of the classifications are ones that imply the light is still on.
+                We look for "spotlight" or "spot", since these were what I saw most often while developing the website.
+                The lightbulb has only been off for a few minutes ever, but testing with the saved images those
+                classifications did not appear.
+                Implying they will catch the bulb being off, should that ever happen. Those "off" images were taken from <a
+                    href="https://www.centennialbulb.org/photos.htm#anchor1234">centennialbulb.org</a>.
 
-    function onLoad() {
-      imageLoaded = true;
-      if (modelLoaded && !running) {
-        running = true;
-        classifyImage();
-      }
-    }
+                <h3>Display The Result</h3>
+                Finally, we display a simple "Yes" or "No" to the user, depending on if we saw the classifications that we were looking for.
+                <br>
+                <br>
+                For the current frame, the result is:
+                <h2 id="result">Loading...</h2>
 
-    // Classify the captured image to check if the light bulb is on
-    function classifyImage() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const image = document.getElementById('streamImage');
+            </article>
 
-      canvas.width = image.width;
-      canvas.height = image.height;
+            <article id="what">
+                <h2 class="major">What Light Bulb?</h2>
+                This light bulb <a href="https://www.centennialbulb.org/">here</a>.
+            </article>
 
-      ctx.drawImage(image, 0, 0);
+        </div>
 
-      classifier.classify(image, gotResults);
-    }
+        <!-- Footer -->
+        <footer id="footer">
+            <p class="copyright">&copy; Collin Dietz. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+        </footer>
 
-    // Display whether the light bulb is on based on classification
-    function gotResults(error, results) {
-      if (error) {
-        console.error(error);
-        document.getElementById('classification').innerText = "Error: " + error;
-        return;
-      }
+    </div>
 
-      // Check if any of the results contain 'spotlight' or 'spot'
-      let lightIsOn = "No"; // Default to "No"
-      for (let i = 0; i < results.length; i++) {
-        const label = results[i].label.toLowerCase();
-        if (label.includes('spotlight') || label.includes('spot')) {
-          lightIsOn = "Yes";
-          break;
-        }
-      }
+    <!-- BG -->
+    <div id="bg"></div>
 
-      // Display the result
-      const classificationElement = document.getElementById('classification');
-      classificationElement.innerText = `${lightIsOn}`;
-      classificationElement.style.fontSize = '100px';
-      if (lightIsOn === "Yes") {
-        classificationElement.style.color = 'green';
-      } else {
-        classificationElement.style.color = 'red';
-      }
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
 
-      populateTable(results);
-    }
-
-    function populateTable(data) {
-      const tableBody = document.querySelector("#confidenceTable tbody");
-      data.forEach(item => {
-        const row = document.createElement("tr");
-
-        // Check if the label includes 'spotlight' or 'spot' to make it noteworthy
-        if (item.label.toLowerCase().includes('spotlight') || item.label.toLowerCase().includes('spot')) {
-          row.classList.add("noteworthy");
-        }
-
-        const labelCell = document.createElement("td");
-        labelCell.textContent = item.label;
-        const confidenceCell = document.createElement("td");
-        confidenceCell.textContent = item.confidence.toFixed(2); // Round the confidence to 2 decimal places
-        row.appendChild(labelCell);
-        row.appendChild(confidenceCell);
-        tableBody.appendChild(row);
-      });
-    }
-  </script>
 </body>
 
 </html>
