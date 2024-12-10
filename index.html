@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Is The Light Still On?</title>
   <script src="https://cdn.jsdelivr.net/npm/ml5@0.12.2/dist/ml5.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -27,6 +28,13 @@
       height: auto;
       border: 1px solid #ccc;
     }
+
+    .noteworthy {
+      background-color: #ffeb3b;
+      /* Yellow background */
+      font-weight: bold;
+      /* Bold text */
+    }
   </style>
 </head>
 
@@ -38,23 +46,50 @@
 
   <!-- Image Section (MJPEG stream) -->
   <div id="image-container">
+    <h2>The Light Right Now</h2>
     <img id="streamImage" src="https://livermore-lightbulb-proxy.vercel.app/api/frame" alt="MJPEG Stream"
-      crossorigin="anonymous">
+      crossorigin="anonymous" onload="onLoad()">
   </div>
 
-  <div id="classification-result">
-    <h3>Classification Results:</h3>
-    <p id="result-text">Waiting for classification...</p>
+  <div class="container mt-5">
+    <h2>Labels and Confidence</h2>
+    <table class="table table-bordered" id="confidenceTable">
+      <thead>
+        <tr>
+          <th>Label</th>
+          <th>Confidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be dynamically inserted here -->
+      </tbody>
+    </table>
   </div>
 
   <script>
     // Load the image classifier model
     const classifier = ml5.imageClassifier('MobileNet', { topk: 25 }, modelReady);
+    let modelLoaded = false;
+    let imageLoaded = false;
+    let running = false;
 
     // When the model is ready, start classifying the image
     function modelReady() {
       console.log('Model Loaded!');
-      classifyImage();
+      modelLoaded = true;
+
+      if (imageLoaded && !running) {
+        running = true;
+        classifyImage();
+      }
+    }
+
+    function onLoad() {
+      imageLoaded = true;
+      if (modelLoaded && !running) {
+        running = true;
+        classifyImage();
+      }
     }
 
     // Classify the captured image to check if the light bulb is on
@@ -79,9 +114,6 @@
         return;
       }
 
-      const resultText = document.getElementById('result-text');
-      resultText.textContent = JSON.stringify(results, null, 2);
-
       // Check if any of the results contain 'spotlight' or 'spot'
       let lightIsOn = "No"; // Default to "No"
       for (let i = 0; i < results.length; i++) {
@@ -93,7 +125,36 @@
       }
 
       // Display the result
-      document.getElementById('classification').innerText = `Is the light bulb on? ${lightIsOn}`;
+      const classificationElement = document.getElementById('classification');
+      classificationElement.innerText = `${lightIsOn}`;
+      classificationElement.style.fontSize = '100px';
+      if (lightIsOn === "Yes") {
+        classificationElement.style.color = 'green';
+      } else {
+        classificationElement.style.color = 'red';
+      }
+
+      populateTable(results);
+    }
+
+    function populateTable(data) {
+      const tableBody = document.querySelector("#confidenceTable tbody");
+      data.forEach(item => {
+        const row = document.createElement("tr");
+
+        // Check if the label includes 'spotlight' or 'spot' to make it noteworthy
+        if (item.label.toLowerCase().includes('spotlight') || item.label.toLowerCase().includes('spot')) {
+          row.classList.add("noteworthy");
+        }
+
+        const labelCell = document.createElement("td");
+        labelCell.textContent = item.label;
+        const confidenceCell = document.createElement("td");
+        confidenceCell.textContent = item.confidence.toFixed(2); // Round the confidence to 2 decimal places
+        row.appendChild(labelCell);
+        row.appendChild(confidenceCell);
+        tableBody.appendChild(row);
+      });
     }
   </script>
 </body>
