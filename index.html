@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Is The Light Still On?</title>
+  <script src="https://cdn.jsdelivr.net/npm/ml5@0.12.2/dist/ml5.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    #classification {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #image-container {
+      margin-top: 20px;
+    }
+
+    img {
+      width: 640px;
+      height: auto;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Is The Light Still On?</h1>
+
+  <!-- Display the result here -->
+  <div id="classification">Loading...</div>
+
+  <!-- Image Section (MJPEG stream) -->
+  <div id="image-container">
+    <img id="streamImage" src="https://livermore-lightbulb-proxy.vercel.app/api/frame" alt="MJPEG Stream"
+      crossorigin="anonymous">
+  </div>
+
+  <div id="classification-result">
+    <h3>Classification Results:</h3>
+    <p id="result-text">Waiting for classification...</p>
+  </div>
+
+  <script>
+    // Load the image classifier model
+    const classifier = ml5.imageClassifier('MobileNet', { topk: 25 }, modelReady);
+
+    // When the model is ready, start classifying the image
+    function modelReady() {
+      console.log('Model Loaded!');
+      classifyImage();
+    }
+
+    // Classify the captured image to check if the light bulb is on
+    function classifyImage() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const image = document.getElementById('streamImage');
+
+      canvas.width = image.width;
+      canvas.height = image.height;
+
+      ctx.drawImage(image, 0, 0);
+
+      classifier.classify(image, gotResults);
+    }
+
+    // Display whether the light bulb is on based on classification
+    function gotResults(error, results) {
+      if (error) {
+        console.error(error);
+        document.getElementById('classification').innerText = "Error: " + error;
+        return;
+      }
+
+      const resultText = document.getElementById('result-text');
+      resultText.textContent = JSON.stringify(results, null, 2);
+
+      // Check if any of the results contain 'spotlight' or 'spot'
+      let lightIsOn = "No"; // Default to "No"
+      for (let i = 0; i < results.length; i++) {
+        const label = results[i].label.toLowerCase();
+        if (label.includes('spotlight') || label.includes('spot')) {
+          lightIsOn = "Yes";
+          break;
+        }
+      }
+
+      // Display the result
+      document.getElementById('classification').innerText = `Is the light bulb on? ${lightIsOn}`;
+    }
+  </script>
+</body>
+
+</html>
